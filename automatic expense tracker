@@ -1,0 +1,127 @@
+
+import csv
+import os
+from datetime import datetime
+
+import pandas as pd
+import matplotlib.pyplot as plt
+
+FILE = "expenses.csv"
+
+
+def initialize_file():
+    if not os.path.exists(FILE):
+        with open(FILE, "w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerow([
+                "Date", "Category", "Description", "Amount"
+            ])
+
+
+def add_expense():
+    try:
+        amount = float(input("Enter amount (Rs.): "))
+
+        if amount <= 0:
+            print("Amount must be greater than zero.")
+            return
+
+        category = input(
+            "Category (Food/Travel/Bills/Shopping/Other): "
+        ).strip().title()
+
+        description = input("Description: ").strip()
+
+        date = datetime.now().strftime("%Y-%m-%d")
+
+        with open(FILE, "a", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerow([
+                date, category, description, amount
+            ])
+
+        print("Expense saved successfully!")
+
+    except ValueError:
+        print("Please enter a valid amount.")
+
+
+def view_expenses():
+    df = pd.read_csv(FILE)
+
+    if df.empty:
+        print("No expenses recorded yet.")
+        return
+
+    print("\n--- Expense Records ---")
+    print(df.to_string(index=False))
+
+
+def show_summary():
+    df = pd.read_csv(FILE)
+
+    if df.empty:
+        print("No expenses available.")
+        return
+
+    total = df["Amount"].sum()
+
+    print("\n--- Expense Summary ---")
+    print(f"Total Spending: Rs. {total:.2f}")
+
+    print("\nCategory-wise Spending:")
+    print(df.groupby("Category")["Amount"].sum().to_string())
+
+    current_month = datetime.now().strftime("%Y-%m")
+    monthly_df = df[df["Date"].astype(str).str.startswith(current_month)]
+
+    print(f"\nSpending in {current_month}: "
+          f"Rs. {monthly_df['Amount'].sum():.2f}")
+
+
+def show_chart():
+    df = pd.read_csv(FILE)
+
+    if df.empty:
+        print("No expenses available for chart.")
+        return
+
+    category_totals = df.groupby("Category")["Amount"].sum()
+
+    category_totals.plot(kind="bar", title="Expenses by Category")
+    plt.xlabel("Category")
+    plt.ylabel("Amount (Rs.)")
+    plt.tight_layout()
+    plt.show()
+
+
+def main():
+    initialize_file()
+
+    while True:
+        print("\n===== AUTOMATIC EXPENSE TRACKER =====")
+        print("1. Add Expense")
+        print("2. View All Expenses")
+        print("3. Expense Summary")
+        print("4. Show Expense Chart")
+        print("5. Exit")
+
+        choice = input("Select an option: ").strip()
+
+        if choice == "1":
+            add_expense()
+        elif choice == "2":
+            view_expenses()
+        elif choice == "3":
+            show_summary()
+        elif choice == "4":
+            show_chart()
+        elif choice == "5":
+            print("Thank you for using Expense Tracker!")
+            break
+        else:
+            print("Invalid choice. Please select 1 to 5.")
+
+
+if __name__ == "__main__":
+    main()
